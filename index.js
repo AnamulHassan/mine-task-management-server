@@ -47,6 +47,9 @@ async function run() {
   try {
     // Data collection
     const taskCollection = client.db('mineTaskManager').collection('taskData');
+    const taskCommentCollection = client
+      .db('mineTaskManager')
+      .collection('taskCommentData');
 
     // Json Web Token
     app.get('/jwt', async (req, res) => {
@@ -89,12 +92,37 @@ async function run() {
       const result = await taskCollection.updateOne(query, updateDoc, options);
       res.send(result);
     });
+    app.patch('/finished_task_modify', async (req, res) => {
+      const id = req.body.id;
+      const query = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          isCompleted: false,
+        },
+      };
+      const result = await taskCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
     app.delete('/task_delete', async (req, res) => {
       const id = req.body.id;
       const query = { _id: ObjectId(id) };
       const result = await taskCollection.deleteOne(query);
       res.send(result);
     });
+    app.get('/finished_task', async (req, res) => {
+      const userEmail = req.query.email;
+      const query = { email: userEmail, isCompleted: true };
+      const result = await taskCollection
+        .find(query)
+        .sort({ date: -1 })
+        .toArray();
+      res.send(result);
+    });
+    // app.post('/add_comment', async (req, res) => {
+    //   const comment = req.body;
+    //   // console.log(comment);
+    // });
   } finally {
   }
 }
